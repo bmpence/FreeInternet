@@ -7,6 +7,7 @@ import os
 import sys
 
 import protocols
+import logging
 
 _BACKLOG = 5 # max number of connections; 5 is standard
 
@@ -122,23 +123,25 @@ class Server(connection_class.Connection):
 
                 # Runs next step in socket; if done, discards it
                 else:
-                    nextAction = socketToConnection[s].next()
-    
-                    # Remove from all lists
-                    if s in waitForRecv:
-                        waitForRecv.remove(s)
+                    try:
+                        # Remove from all lists
+                        if s in waitForRecv:
+                            waitForRecv.remove(s)
 
-                    if s in waitForSend:
-                        waitForSend.remove(s)
-                    
-                    # Add to next correct list
-                    if nextAction == protocols._WAIT_FOR_SEND:
-                        waitForSend.append(s)
+                        if s in waitForSend:
+                            waitForSend.remove(s)
 
-                    elif nextAction == protocols._WAIT_FOR_RECV:
-                        waitForSend.append(s)
+                        nextAction = socketToConnection[s].next()
                         
-                    else:
+                        # Add to next correct list
+                        if nextAction == protocols._WAIT_FOR_SEND:
+                            waitForSend.append(s)
+
+                        elif nextAction == protocols._WAIT_FOR_RECV:
+                            waitForSend.append(s)
+
+                    # Error or done
+                    except StopIteration:
                         self.log(str(self),
                                  "Closing connection")
                                  

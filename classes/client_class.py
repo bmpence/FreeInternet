@@ -72,23 +72,26 @@ class Client(connection_class.Connection):
         actions = protocols._PROTOCOLS[protocol](self, self.sock, direction, socket.gethostname(), **kwargs).actions()
         self.log(str(self),
                  "Running actions")
-        while actions.next():
-            pass
 
-        self.log(str(self),
-                 "Closing connection")
+        try:
+            while actions.next():
+                print "Performing action"
 
-        self.sock.close()
-        self.sock = None
+        except StopIteration:
+            self.log(str(self),
+                     "Closing connection")
 
-        return True
+            self.sock.close()
+            self.sock = None
+
+            return True
 
 if __name__ == "__main__":
     cli = Client()
 
     # Test file protocol
-    cli.connect("file", protocols.ProtocolFile._JOB_NEW, directory="helper/clientFiles")
-    cli.connect("file", protocols.ProtocolFile._JOB_OLD, directory="helper/clientFiles", jobID=123)
+    cli.connect("file", protocols.ProtocolFile._JOB_NEW, directory="classes/clientFiles")
+    cli.connect("file", protocols.ProtocolFile._JOB_OLD, directory="classes/clientFiles", jobID=123)
 
     # Test echo protocol
     cli.connect("echo", protocols.ProtocolEcho._FROM_CLIENT)

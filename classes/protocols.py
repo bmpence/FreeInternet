@@ -2,7 +2,7 @@ import os
 import socket
 import logging
 
-_ROOT_DIRECTORY = "/home/ben/Source/Free-Internet/"
+_ROOT_DIRECTORY = "/home/ben/Source/FreeInternet/"
 _DEFAULT_PATH = "classes/serverFiles/"
 
 _DEFAULT_HOST = 'localhost'
@@ -25,7 +25,6 @@ class Protocol(object):
     def __str__(self):
         return self.address
 
-    @classmethod
     def pad(cls, l):
         if type(l) is list:
             string = _JOIN_CHARACTER.join(l) + _JOIN_CHARACTER
@@ -36,8 +35,7 @@ class Protocol(object):
             string += _PAD_CHARACTER
         return string
 
-    @classmethod
-    def unpad(cls, t):
+    def unpad(self, t):
         l = t.split(_JOIN_CHARACTER)[:-1]
         
         if len(l) == 1:
@@ -48,7 +46,7 @@ class Protocol(object):
     def writeFile(self, file, data):
         try:
             file.write(data)
-        except IOError, e:
+        except IOError:
             logging.Logger.log(str(self.caller),
                                "[%s] "
                                "Error writing to file %s" % (str(self), file.name),
@@ -57,7 +55,7 @@ class Protocol(object):
     def readFile(self, file, amount=_CHUNK_SIZE):
         try:
             data = file.read(amount)
-        except IOError, e:
+        except IOError:
             logging.Logger.log(str(self.caller),
                                "[%s] "
                                "Error reading from file %s" % (str(self), file.name),
@@ -71,7 +69,7 @@ class Protocol(object):
             if binary:
                 self.sock.send(data)
             else:
-                self.sock.send(Protocol.pad(data))
+                self.sock.send(self.pad(data))
         except socket.error, e:
             logging.Logger.log(str(self.caller),
                                "[%s] "
@@ -85,7 +83,7 @@ class Protocol(object):
             if binary:
                 data = self.sock.recv(binary)
             else:
-                data = Protocol.unpad(self.sock.recv(_CHUNK_SIZE))
+                data = self.unpad(self.sock.recv(_CHUNK_SIZE))
         except socket.error, e:
             logging.Logger.log(str(self.caller),
                                "[%s] "
@@ -98,7 +96,7 @@ class Protocol(object):
         pass
                     
     def dummyActions(self):
-        yield None
+        pass
 
 class ProtocolEcho(Protocol):
     _FROM_CLIENT = "fromClient"
@@ -157,8 +155,6 @@ class ProtocolEcho(Protocol):
         data = self.recvData()
         print data
 
-        yield None
-
     def recv(self):
         yield _WAIT_FOR_RECV
         data = self.recvData()
@@ -180,8 +176,6 @@ class ProtocolEcho(Protocol):
 
         yield _WAIT_FOR_SEND
         self.sendData("TA")
-
-        yield None
 
 class ProtocolFile(Protocol):
     _JOB_NEW = "new"
@@ -251,8 +245,6 @@ class ProtocolFile(Protocol):
 
         file.close()
 
-        yield None
-
     def recv(self):
         # Receive jobID
         yield _WAIT_FOR_RECV
@@ -276,8 +268,6 @@ class ProtocolFile(Protocol):
 
         file.close()
 
-        yield None
-
 class ProtocolMessage(ProtocolEcho):
     _FROM_CLIENT = "fromClient"
     _FROM_SERVER = "fromServer"
@@ -296,8 +286,6 @@ class ProtocolMessage(ProtocolEcho):
         yield _WAIT_FOR_SEND
         self.sendData(self._END_OF_STREAM)
 
-        yield None
-
     def recv(self):
 
         yield _WAIT_FOR_RECV
@@ -307,8 +295,6 @@ class ProtocolMessage(ProtocolEcho):
             print data
             yield _WAIT_FOR_RECV
             data = self.recvData()
-
-        yield None
 
 class ProtocolFile(Protocol):
     _JOB_NEW = "new"
@@ -378,8 +364,6 @@ class ProtocolFile(Protocol):
 
         file.close()
 
-        yield None
-
     def recv(self):
         # Receive jobID
         yield _WAIT_FOR_RECV
@@ -402,8 +386,6 @@ class ProtocolFile(Protocol):
             bytesLeft -= _CHUNK_SIZE
 
         file.close()
-
-        yield None
 
 
 _PROTOCOLS = {"file"    : ProtocolFile,
